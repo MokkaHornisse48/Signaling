@@ -7,7 +7,7 @@ import mod.mh48.signaling.client.ClientServer;
 import mod.mh48.signaling.server.Connector;
 import mod.mh48.signaling.server.Server;
 
-public class ConnectPacket extends Packet {
+public class ConnectPacket extends Packet implements PacketWithClientId{
 
     public static int id;
 
@@ -44,7 +44,7 @@ public class ConnectPacket extends Packet {
                     connectorId = id;
                     Utils.sendPacket(this, connector.channel);
                 } else {
-                    Utils.sendPacket(new ErrorPacket(id,1), ctx.channel());
+                    Utils.sendPacket(new ErrorPacket(id,1,connectorId), ctx.channel());
                 }
             }
         }else {

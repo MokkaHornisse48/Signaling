@@ -1,6 +1,7 @@
 package mod.mh48.signaling.packets;
 
 import io.netty.buffer.ByteBuf;
+import mod.mh48.signaling.LogUtils;
 import mod.mh48.signaling.Utils;
 
 import java.net.InetSocketAddress;
@@ -23,7 +24,7 @@ public class PingPacket extends Packet{
     public void handle() {
         if(ctx.channel().remoteAddress() instanceof InetSocketAddress) {
             InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
-            System.out.println("Ping from: "+address.getHostName()+":"+address.getPort());
+            LogUtils.info("Ping from: "+address.getHostName()+":"+address.getPort());
         }
 
         Utils.sendPacket(new PongPacket(),ctx.channel());
@@ -41,6 +42,6 @@ public class PingPacket extends Packet{
 
     @Override
     public Side getSide() {
-        return Side.BOTH;
+        return Side.SERVER;
     }
 }

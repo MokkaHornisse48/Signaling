@@ -6,7 +6,7 @@ import mod.mh48.signaling.Utils;
 import mod.mh48.signaling.client.ClientClient;
 import mod.mh48.signaling.server.Server;
 
-public class Candidate2CCPacket extends Packet {
+public class Candidate2CCPacket extends Packet implements PacketWithClientId{
 
     public static int id;
 
@@ -56,8 +56,7 @@ public class Candidate2CCPacket extends Packet {
                 if(server.clientClients.containsKey(cid)){
                     Utils.sendPacket(this,server.clientClients.get(cid));
                 }else {
-                    System.out.println("Wrong id:"+cid);
-                    Utils.sendPacket(new ErrorPacket(id,1),ctx.channel());
+                    Utils.sendPacket(new ErrorPacket(id,1,cid),ctx.channel());
                 }
             }
         }else{

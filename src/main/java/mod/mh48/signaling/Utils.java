@@ -5,6 +5,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import mod.mh48.signaling.packets.Side;
 import mod.mh48.signaling.packets.Packet;
+import mod.mh48.signaling.server.Server;
 
 import java.util.Map;
 import java.util.Objects;
@@ -24,10 +25,16 @@ public class Utils {
     }
 
     public static ChannelFuture sendPacket(Packet packet, Channel ctx){
-        System.out.println("Debug Send:"+packet);
-        ByteBuf buf = ctx.alloc().buffer();
-        packet.encode(buf);
-        return ctx.writeAndFlush(buf);
+        if(ctx.isActive()) {
+            System.out.println("Debug Send:" + packet);
+            ByteBuf buf = ctx.alloc().buffer();
+            packet.encode(buf);
+            return ctx.writeAndFlush(buf);
+        }
+        if(packet.handler.getInstance()instanceof Server server){
+            server.updateClients();
+        }
+        return null;
     }
 
     public static boolean isSide(Side handlerSide, Side packetSide){

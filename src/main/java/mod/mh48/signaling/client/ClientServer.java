@@ -4,11 +4,13 @@ import dev.onvoid.webrtc.RTCIceCandidate;
 import io.netty.channel.Channel;
 import io.netty.channel.local.LocalAddress;
 import mod.mh48.signaling.Utils;
-import mod.mh48.signaling.packets.AnswerPacket;
-import mod.mh48.signaling.packets.Candidate2CCPacket;
-import mod.mh48.signaling.packets.LoginRequestPacket;
+import mod.mh48.signaling.packets.*;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 public class ClientServer extends Client implements Runnable{
@@ -21,6 +23,8 @@ public class ClientServer extends Client implements Runnable{
     public LocalAddress localAddress;
 
     public HashMap<String,P2PConnection> clients = new HashMap();
+
+    public List<P2PConnection> connections = new LinkedList();
     public ClientServer(String pServerName, boolean pIsPublic){
         this.serverName = pServerName;
         this.isPublic = pIsPublic;
@@ -39,6 +43,16 @@ public class ClientServer extends Client implements Runnable{
         sendAllPackets();
     }
 
+    @Override
+    public void onError(Channel channel, ErrorPacket error) {
+        if(Packet.packets.get(error.cause) instanceof PacketWithClientId){
+            if(clients.containsKey(error.info)){
+                clients.remove(error.info);
+            }
+        }
+    }
+
+
     public void onLoginSuccess(String pId){
         id = pId;
         System.out.println("Id:"+id);
@@ -51,7 +65,8 @@ public class ClientServer extends Client implements Runnable{
         System.out.println("Client id:"+cid);
         P2PConnection p2pConnection = new P2PConnection(ice -> {
             addPacket(new Candidate2CCPacket(cid,ice));
-        });
+        },this);
+        connections.add(p2pConnection);
         p2pConnection.localAddress = localAddress;
         clients.put(cid,p2pConnection);
         p2pConnection.makeAnswer(offer).setOnFinished(answer -> {

@@ -7,6 +7,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import mod.mh48.signaling.ConnectorInfo;
 import mod.mh48.signaling.Instance;
+import mod.mh48.signaling.LogUtils;
 import mod.mh48.signaling.NetworkHandler;
 import mod.mh48.signaling.packets.Side;
 
@@ -18,7 +19,7 @@ public class Server extends ChannelInboundHandlerAdapter implements Instance {
 
     public HashMap<String,Channel> clientClients = new HashMap();
 
-    public List<ConnectorInfo> getConnectorInfos(){
+    public List<ConnectorInfo> getConnectorInfos(){//todo Admin access
         List<ConnectorInfo> list = new ArrayList<ConnectorInfo>(connectors.size());
         for (Map.Entry<String, Connector> set : connectors.entrySet()) {
             list.add(new ConnectorInfo(set.getKey(),set.getValue().name,set.getValue().isPublic));
@@ -26,7 +27,7 @@ public class Server extends ChannelInboundHandlerAdapter implements Instance {
         return list;
     }
     public List<ConnectorInfo> getPublicConnectorInfos(){
-        ArrayList<ConnectorInfo> list = new ArrayList<ConnectorInfo>(connectors.size());
+        ArrayList<ConnectorInfo> list = new ArrayList(connectors.size());
         for (Map.Entry<String, Connector> set : connectors.entrySet()) {
             if(set.getValue().isPublic) {
                 list.add(new ConnectorInfo(set.getKey(), set.getValue().name, set.getValue().isPublic));
@@ -34,6 +35,21 @@ public class Server extends ChannelInboundHandlerAdapter implements Instance {
         }
         list.trimToSize();
         return list;
+    }
+
+    public void updateClients(){
+        for (Map.Entry<String, Connector> set : connectors.entrySet()) {
+            if(!set.getValue().channel.isActive()){
+                connectors.remove(set.getKey());
+                LogUtils.info("Connector "+set.getKey()+" disconnected!");
+            }
+        }
+        for (Map.Entry<String, Channel> set : clientClients.entrySet()) {
+            if(!set.getValue().isActive()){
+                connectors.remove(set.getKey());
+                LogUtils.info("Client "+set.getKey()+" disconnected!");
+            }
+        }
     }
 
     public String newId(HashMap<String,?> map) {
@@ -71,7 +87,7 @@ public class Server extends ChannelInboundHandlerAdapter implements Instance {
                     .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
 
             // Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind(1234).sync(); // (7)
+            ChannelFuture f = b.bind(67772).sync(); // (7)
             f.addListener((ChannelFutureListener) future -> {
                 if (!future.isSuccess()) {
                     future.channel().pipeline().fireExceptionCaught(future.cause());

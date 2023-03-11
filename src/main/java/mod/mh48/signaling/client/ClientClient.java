@@ -1,18 +1,8 @@
 package mod.mh48.signaling.client;
 
 import dev.onvoid.webrtc.RTCIceCandidate;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.local.LocalAddress;
-import io.netty.channel.local.LocalChannel;
-import io.netty.channel.local.LocalServerChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
-import mod.mh48.p2pNetty.nettyservertestlol;
 import mod.mh48.signaling.ConnectorInfo;
-import mod.mh48.signaling.Utils;
 import mod.mh48.signaling.packets.*;
 
 import java.util.Collections;
@@ -47,13 +37,19 @@ public class ClientClient extends Client{
                 }else{
                     addPacket(new Candidate2CSPacket(CSid, ice));
                 }
-            });
+            },this);
             p2pConnection.makeOffer().setOnFinished(offer -> {
                 addPacket(new ConnectPacket(CSid,offer));
             });
         }
         sendAllPackets();
     }
+
+    @Override
+    public void onError(Channel channel, ErrorPacket error) {
+
+    }
+
 
     public void onCCCandidate(Channel channel, RTCIceCandidate candidate){
         p2pConnection.addCandidate(candidate);

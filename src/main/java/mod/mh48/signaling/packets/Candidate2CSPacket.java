@@ -6,7 +6,7 @@ import mod.mh48.signaling.Utils;
 import mod.mh48.signaling.client.ClientServer;
 import mod.mh48.signaling.server.Server;
 
-public class Candidate2CSPacket extends Packet {
+public class Candidate2CSPacket extends Packet implements PacketWithClientId{
 
     public static int id;
 
@@ -60,8 +60,7 @@ public class Candidate2CSPacket extends Packet {
                         cid = ckey;
                         Utils.sendPacket(this, server.connectors.get(tcid).channel);
                     }else {
-                        System.out.println("Wrong channel:"+ckey);
-                        Utils.sendPacket(new ErrorPacket(id,1),ctx.channel());
+                        Utils.sendPacket(new ErrorPacket(id,1,cid),ctx.channel());
                     }
                 }
             }

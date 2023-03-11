@@ -1,43 +1,51 @@
-package mod.mh48.p2pNetty;
+package mod.mh48.signaling.test;
 
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
-import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import mod.mh48.signaling.Utils;
-import mod.mh48.signaling.client.ClientServer;
+import mod.mh48.signaling.client.ClientClient;
+import mod.mh48.signaling.client.P2PConnection;
 
-public class nettyservertestlol {
+import java.util.Scanner;
+
+public class nettyclienttestlol {
     public static void main(String[] args){
+        System.out.println("id:");
+        Scanner my_scan = new Scanner(System.in);
+        String pid = my_scan.nextLine();
         try {
-            ServerBootstrap b = new ServerBootstrap(); // (2)
-            ClientServer clientServer = new ClientServer("cool",true);
-            b.group(new NioEventLoopGroup(),new NioEventLoopGroup())
-                    .channel(LocalServerChannel.class) // (3)
-                    .childHandler(new ChannelInitializer<LocalChannel>() { // (4)
+            P2PConnection p2pConnection = ClientClient.createWEBRTC(pid);
+            LocalAddress address = p2pConnection.getAddressToConnect();
+            Bootstrap b = new Bootstrap();
+            System.out.println("1");
+            b.group(new NioEventLoopGroup())
+                    .channel(LocalChannel.class)
+                    .handler(new ChannelInitializer<LocalChannel>() { // (4)
                         @Override
                         public void initChannel(LocalChannel ch) throws Exception {
                             ch.pipeline().addLast(new testnh());
                         }
                     });
-
-            // Bind and start to accept incoming connections.
-            LocalAddress address = new LocalAddress("P2PS");
-            clientServer.localAddress = address;
-            ChannelFuture f = b.bind(address).sync(); // (7)
+            System.out.println("2");
+            ChannelFuture f = b.connect(address).sync();
+            System.out.println("3");
             f.addListener((ChannelFutureListener) future -> {
                 if (!future.isSuccess()) {
                     future.channel().pipeline().fireExceptionCaught(future.cause());
                 }
-                System.out.println("Bind successful to "+future.channel().localAddress());
-                new Thread(clientServer).start();
+                System.out.println("Connected successful to ("+future.channel().remoteAddress()+") with ("+future.channel().localAddress()+")");
+                ByteBuf buf = f.channel().alloc().buffer();
+                Utils.writeString(buf,"test");
+                f.channel().writeAndFlush(buf);
             });
-
+            System.out.println("4");
+            Channel channel = f.channel();
             f.channel().closeFuture().sync();
-            System.out.println("done");
+
         }catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -52,7 +60,7 @@ public class nettyservertestlol {
             System.out.println(s);
             msg.release();
             ByteBuf buf = ctx.alloc().buffer();
-            Utils.writeString(buf,"yay"+s);
+            Utils.writeString(buf,"lol"+s);
             ctx.channel().writeAndFlush(buf);
         }
     }

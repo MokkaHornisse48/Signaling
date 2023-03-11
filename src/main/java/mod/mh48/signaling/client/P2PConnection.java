@@ -9,7 +9,11 @@ import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
+import mod.mh48.signaling.Instance;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.Queue;
 import java.util.Random;
@@ -30,10 +34,13 @@ public class P2PConnection {
     public Queue<RTCDataChannelBuffer> sendQueue = new ConcurrentLinkedQueue();
     public Queue<byte[]> rcvQueue = new ConcurrentLinkedQueue();
 
-    public P2PConnection(Consumer<RTCIceCandidate> onIce){
+    public Instance instance;
+
+    public P2PConnection(Consumer<RTCIceCandidate> onIce,Instance instance){
+        this.instance = instance;
         PeerConnectionFactory factory = new PeerConnectionFactory();
         RTCIceServer iceServer = new RTCIceServer();
-        iceServer.urls.add("stun:stun.l.google.com:19302");
+        iceServer.urls.add("stun:stun.l.google.com:19302");//todo add more lol
         iceServer.urls.add("stun:stun1.l.google.com:19302");
 
         RTCConfiguration config = new RTCConfiguration();
@@ -144,7 +151,7 @@ public class P2PConnection {
                     public void onMessage(RTCDataChannelBuffer buffer) {
                         byte[] arrayBuffer = new byte[buffer.data.remaining()];
                         buffer.data.get(arrayBuffer);
-                        System.out.println("rcvd");
+                        //System.out.println("rcvd");
                         if(localChannel != null){
                             ByteBuf buf = localChannel.alloc().buffer();
                             buf.writeBytes(arrayBuffer);
@@ -181,7 +188,7 @@ public class P2PConnection {
                             localChannel = ch;
                         }
                     });
-            LocalAddress address = new LocalAddress("P2PC");
+            LocalAddress address = new LocalAddress("P2PC:"+this.hashCode());
             ChannelFuture f = b.bind(address).sync(); // (7)
             f.addListener((ChannelFutureListener) future -> {
                 if (!future.isSuccess()) {
@@ -295,10 +302,22 @@ public class P2PConnection {
         return false;
     }
 
+    public void close(){
+        if(localDataChannel!=null)localDataChannel.close();
+        if(remoteDataChannel!=null)remoteDataChannel.close();
+        if(peerConnection!=null) peerConnection.close();
+        if(localChannel!=null)localChannel.close();
+        if(instance instanceof ClientServer clientServer){
+            if(clientServer.connections.contains(this)) {
+                clientServer.connections.remove(this);
+            }
+        }
+    }
+
     public class p2preader extends ChannelInboundHandlerAdapter{
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msgo) throws Exception { // (2)
-            System.out.println( msgo);
+            //System.out.println( msgo);
             ByteBuf msg = ((ByteBuf) msgo);
             byte[] msgb = new byte[msg.readableBytes()];
             msg.readBytes(msgb);
@@ -312,7 +331,7 @@ public class P2PConnection {
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            peerConnection.close();
+            close();
         }
     }
 }

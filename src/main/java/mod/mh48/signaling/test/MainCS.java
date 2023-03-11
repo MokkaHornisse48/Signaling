@@ -1,5 +1,6 @@
-package mod.mh48.signaling.client;
+package mod.mh48.signaling.test;
 
+import mod.mh48.signaling.client.ClientServer;
 import mod.mh48.signaling.packets.Packet;
 
 public class MainCS {

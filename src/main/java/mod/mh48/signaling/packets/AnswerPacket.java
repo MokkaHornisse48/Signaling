@@ -5,7 +5,7 @@ import mod.mh48.signaling.Utils;
 import mod.mh48.signaling.client.ClientClient;
 import mod.mh48.signaling.server.Server;
 
-public class AnswerPacket extends Packet {
+public class AnswerPacket extends Packet implements PacketWithClientId{
 
     public static int id;
 
@@ -40,7 +40,7 @@ public class AnswerPacket extends Packet {
                 if(server.clientClients.containsKey(cid)){
                     Utils.sendPacket(this,server.clientClients.get(cid));
                 }else {
-                    Utils.sendPacket(new ErrorPacket(id,1),ctx.channel());
+                    Utils.sendPacket(new ErrorPacket(id,1,cid),ctx.channel());
                 }
             }
         }else{

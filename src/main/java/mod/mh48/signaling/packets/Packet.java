@@ -12,6 +12,8 @@ public abstract class Packet {
 
     public static List<Packet> packets = new ArrayList<>();
 
+    public static int protocolVersion = 1;
+
 
     public ChannelHandlerContext ctx;
     public NetworkHandler handler;

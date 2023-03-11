@@ -11,9 +11,7 @@ import mod.mh48.signaling.ConnectorInfo;
 import mod.mh48.signaling.Instance;
 import mod.mh48.signaling.NetworkHandler;
 import mod.mh48.signaling.Utils;
-import mod.mh48.signaling.packets.GetPublicServersPacket;
-import mod.mh48.signaling.packets.Packet;
-import mod.mh48.signaling.packets.Side;
+import mod.mh48.signaling.packets.*;
 
 import javax.swing.text.Utilities;
 import java.util.*;
@@ -39,18 +37,17 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
     }
 
     public void connect(){
-        String host = "127.0.0.1";
-        int port = 1234;
+        String host = "127.0.0.1";//todo host variable
+        int port = 67772;
         workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
-            Instance i = this;
             b.group(workerGroup)
                     .channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new NetworkHandler(Side.CLIENT,i));
+                            ch.pipeline().addLast(new NetworkHandler(Side.CLIENT,Client.this));
                         }
                     })
                     .option(ChannelOption.SO_KEEPALIVE, true);
@@ -60,9 +57,7 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
                 if (!future.isSuccess()) {
                     future.channel().pipeline().fireExceptionCaught(future.cause());
                 }
-                System.out.println("Connected successful to ("+future.channel().remoteAddress()+") with ("+future.channel().localAddress()+")");
-
-                this.onConnected(future.channel());
+                Utils.sendPacket(new PingPacket(),future.channel());
             });
             channel = f.channel();
 
@@ -72,4 +67,6 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
     }
 
     public abstract void onConnected(Channel channel);
+
+    public abstract void onError(Channel channel, ErrorPacket error);
 }
