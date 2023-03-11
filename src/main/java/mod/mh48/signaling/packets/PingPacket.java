@@ -27,7 +27,7 @@ public class PingPacket extends Packet{
             LogUtils.info("Ping from: "+address.getHostName()+":"+address.getPort());
         }
 
-        Utils.sendPacket(new PongPacket(),ctx.channel());
+        Utils.sendPacket(new PongPacket(Packet.protocolVersion),ctx.channel());
     }
 
     @Override
