@@ -87,7 +87,7 @@ public class Server extends ChannelInboundHandlerAdapter implements Instance {
                     .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
 
             // Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind(67772).sync(); // (7)
+            ChannelFuture f = b.bind(27776).sync(); // (7)
             f.addListener((ChannelFutureListener) future -> {
                 if (!future.isSuccess()) {
                     future.channel().pipeline().fireExceptionCaught(future.cause());

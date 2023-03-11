@@ -38,7 +38,7 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
 
     public void connect(){
         String host = "127.0.0.1";//todo host variable
-        int port = 67772;
+        int port = 27776;
         workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
