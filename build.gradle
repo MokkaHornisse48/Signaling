@@ -19,6 +19,18 @@ dependencies {
     implementation group: "dev.onvoid.webrtc", name: "webrtc-java", version: "0.7.0", classifier: "linux-x86_64"
 }
 
+jar {
+    from {
+
+        configurations
+                .runtimeClasspath
+                .collect {
+                    zipTree(it)
+                }
+
+    }
+}
+
 test {
     useJUnitPlatform()
 }
