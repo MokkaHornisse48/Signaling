@@ -6,7 +6,6 @@ import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
-import mod.mh48.signaling.Utils;
 import mod.mh48.signaling.client.ClientClient;
 import mod.mh48.signaling.client.P2PConnection;
 

@@ -1,29 +1,24 @@
 package mod.mh48.signaling.client;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import dev.onvoid.webrtc.RTCIceCandidate;
 import mod.mh48.signaling.*;
-import mod.mh48.signaling.packets.*;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import javax.swing.text.Utilities;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
-public abstract class Client extends ChannelInboundHandlerAdapter implements Instance {
+public abstract class Client {
 
-    public Channel channel;
-    public EventLoopGroup workerGroup;
-
-    public Queue<Packet> packetQueue = new ConcurrentLinkedQueue();
-
+    public static int protocolVersion = 2;
     public String status;
 
     public boolean failed = false;
+
+    public WebSocketClient WS;
 
     String host = "127.0.0.1";
 
@@ -32,47 +27,110 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
         status = "Initialized";
     }
 
-    public void sendAllPackets(){
-        Packet p = packetQueue.poll();
-        while (p!=null){
-            Utils.sendPacket(p,channel);
-            p = packetQueue.poll();
-        }
-    }
-
-    public void addPacket(Packet packet){
-        packetQueue.add(packet);
-    }
-
-    public void connect(){
-        status = "Connecting";
-        int port = 27776;
-        workerGroup = new NioEventLoopGroup();
+    public void connect() {
+        URI uri;
         try {
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup)
-                    .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() { // (4)
-                        @Override
-                        public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new NetworkHandler(Side.CLIENT,Client.this));
-                        }
-                    })
-                    .option(ChannelOption.SO_KEEPALIVE, true);
-
-            ChannelFuture f = b.connect(host, port).sync();
-            f.addListener((ChannelFutureListener) future -> {
-                if (!future.isSuccess()) {
-                    future.channel().pipeline().fireExceptionCaught(future.cause());
-                }
-                status = "Pinging";
-                Utils.sendPacket(new PingPacket(),future.channel());
-            });
-            channel = f.channel();
-
-        }catch (InterruptedException e) {
-            failed(e.getMessage());
+            uri = new URI("ws://"+host+":27776");
+        }catch (URISyntaxException e){
+            failed("URISyntaxException:"+e.getMessage());
+            return;
         }
+        WS = new WebSocketClient(uri)
+        {
+            @Override
+            public void onMessage( String message ) {
+                JSONObject c = new JSONObject(message);
+                String id = c.getString("id");
+                if(id.equals("pong")){
+                    int pv = c.getInt("pv");
+                    if(protocolVersion==pv){
+                        preOnConnected();
+                    }else{
+                        LogUtils.fatal("Signaling protocol version wrong please update or contact the author client:"+protocolVersion+" server:"+pv);
+                    }
+                }
+                if(id.equals("login")){
+                    if(Client.this instanceof ClientServer clientServer){
+                        clientServer.onLoginSuccess(c.getString("cid"));
+                    }
+                }
+                if(id.equals("connect")){
+                    if(Client.this instanceof ClientServer clientServer){
+                        clientServer.onCCConnect(c.getString("cid"),c.getString("offer"));
+                    }
+                }
+                if(id.equals("forward")){
+                    String type = c.getString("type");
+                    JSONObject c2 = c.getJSONObject("content");
+                    if(type.equals("answer")){
+                        if(Client.this instanceof ClientClient clientClient){
+                            clientClient.onAnswer(c2.getString("answer"));
+                        }
+                    }
+                    if(type.equals("candidate")){
+                        String sdpMid = c2.getString("sdpMin");
+                        int sdpMLineIndex = c2.getInt("sdpMLineIndex");
+                        String sdp = c2.getString("sdp");
+                        String serverUrl = c2.optString("serverUrl","");
+                        RTCIceCandidate candidate = new RTCIceCandidate(sdpMid, sdpMLineIndex, sdp, serverUrl);
+                        if(Client.this instanceof ClientClient clientClient){
+                            clientClient.onCCCandidate(candidate);
+                        }
+                        if(Client.this instanceof ClientServer clientServer){
+                            clientServer.onCSCandidate(candidate,c.getString("cid"));
+                        }
+                    }
+                }
+                if(id.equals("publicServers")){
+                    if(Client.this instanceof ClientClient clientClient){
+                        JSONArray pcs = c.getJSONArray("pcs");
+                        List<ConnectorInfo> inf = new ArrayList<>(pcs.length());
+                        for(int i = 0;i<pcs.length();i++){
+                            JSONObject ci = pcs.getJSONObject(i);
+                            inf.add(new ConnectorInfo(ci.getString("id"),ci.getString("name")));
+                        }
+                        clientClient.onGetPublicServersPacket(inf);
+                    }
+                }
+            }
+
+            @Override
+            public void onOpen( ServerHandshake handshake ) {
+                LogUtils.info("opened websocket connection");
+                JSONObject m = new JSONObject();
+                m.put("id","ping");
+                WS.send(m.toString());
+            }
+
+            @Override
+            public void onClose( int code, String reason, boolean remote ) {
+                LogUtils.info("closed websocket connection");
+            }
+
+            @Override
+            public void onError( Exception ex ) {
+                LogUtils.error("Exception in Websocket:"+ex);
+            }
+
+        };
+        WS.connect();
+    }
+
+    public void sendCandidate(RTCIceCandidate candidate,String cid){
+        JSONObject m = new JSONObject();
+        m.put("id","forward");
+        m.put("cid",cid);
+        m.put("type","candidate");
+
+        JSONObject c = new JSONObject();
+        c.put("sdpMin",candidate.sdpMid);
+        c.put("sdpMLineIndex",candidate.sdpMLineIndex);
+        c.put("sdp",candidate.sdp);
+        c.put("serverUrl",candidate.serverUrl);
+
+        m.put("content",c);
+
+        WS.send(m.toString());
     }
 
     public void failed(String s){
@@ -84,12 +142,12 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
     public String getStatus(){
         return status;
     }
-    public void preOnConnected(Channel channel){
+    public void preOnConnected(){
         status = "Connected";
-        this.onConnected(channel);
+        this.onConnected();
     }
 
-    public abstract void onConnected(Channel channel);
+    public abstract void onConnected();
 
-    public abstract void onError(Channel channel, ErrorPacket error);
+    //todo public abstract void onError(Channel channel, ErrorPacket error);
 }

@@ -9,11 +9,7 @@ import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
-import mod.mh48.signaling.Instance;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.Queue;
 import java.util.Random;
@@ -34,9 +30,9 @@ public class P2PConnection {
     public Queue<RTCDataChannelBuffer> sendQueue = new ConcurrentLinkedQueue();
     public Queue<byte[]> rcvQueue = new ConcurrentLinkedQueue();
 
-    public Instance instance;
+    public Client instance;
 
-    public P2PConnection(Consumer<RTCIceCandidate> onIce,Instance instance){
+    public P2PConnection(Consumer<RTCIceCandidate> onIce,Client instance){
         this.instance = instance;
         PeerConnectionFactory factory = new PeerConnectionFactory();
         RTCIceServer iceServer = new RTCIceServer();

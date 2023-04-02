@@ -7,7 +7,6 @@ import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
-import mod.mh48.signaling.Utils;
 import mod.mh48.signaling.client.ClientServer;
 
 public class nettyservertestlol {
