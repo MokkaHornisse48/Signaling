@@ -18,17 +18,17 @@ import java.util.function.Consumer;
 
 public class P2PConnection {
 
-    public RTCPeerConnection peerConnection;
+    public volatile RTCPeerConnection peerConnection;
 
-    public RTCDataChannel localDataChannel;
-    public RTCDataChannel remoteDataChannel;
+    public volatile RTCDataChannel localDataChannel;
+    public volatile RTCDataChannel remoteDataChannel;
 
-    public LocalChannel localChannel;
+    public volatile LocalChannel localChannel;
 
-    public LocalAddress localAddress;
+    public volatile LocalAddress localAddress;
 
-    public Queue<RTCDataChannelBuffer> sendQueue = new ConcurrentLinkedQueue();
-    public Queue<byte[]> rcvQueue = new ConcurrentLinkedQueue();
+    public volatile Queue<RTCDataChannelBuffer> sendQueue = new ConcurrentLinkedQueue();
+    public volatile Queue<byte[]> rcvQueue = new ConcurrentLinkedQueue();
 
     public Client instance;
 

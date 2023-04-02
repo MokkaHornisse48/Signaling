@@ -19,7 +19,7 @@ public class ClientClient extends Client{
 
     public Mode mode;
 
-    public P2PConnection p2pConnection;
+    public volatile P2PConnection p2pConnection;
 
     public Queue<AbstractMap.SimpleEntry<String,RTCIceCandidate>> candidateQueue = new ConcurrentLinkedQueue();
 
