@@ -18,7 +18,7 @@ public class nettyclienttestlol {
         Scanner my_scan = new Scanner(System.in);
         String pid = my_scan.nextLine();
         try {
-            P2PConnection p2pConnection = ClientClient.createWEBRTC(pid);
+            P2PConnection p2pConnection = ClientClient.createWEBRTC(pid,"127.0.0.1");
             LocalAddress address = p2pConnection.getAddressToConnect();
             Bootstrap b = new Bootstrap();
             System.out.println("1");

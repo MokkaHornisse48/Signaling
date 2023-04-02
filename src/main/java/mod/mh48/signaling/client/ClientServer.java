@@ -25,7 +25,8 @@ public class ClientServer extends Client implements Runnable{
     public HashMap<String,P2PConnection> clients = new HashMap();
 
     public List<P2PConnection> connections = new LinkedList();
-    public ClientServer(String pServerName, boolean pIsPublic){
+    public ClientServer(String pServerName, boolean pIsPublic,String signalingHost){
+        super(signalingHost);
         this.serverName = pServerName;
         this.isPublic = pIsPublic;
     }
@@ -39,6 +40,7 @@ public class ClientServer extends Client implements Runnable{
     }
     @Override
     public void onConnected(Channel channel) {
+        status = "Loging in";
         addPacket(new LoginRequestPacket(serverName,isPublic));
         sendAllPackets();
     }
@@ -50,10 +52,16 @@ public class ClientServer extends Client implements Runnable{
                 clients.remove(error.info);
             }
         }
+        if(Packet.packets.get(error.cause) instanceof LoginRequestPacket){
+            if(error.code == 0){
+                failed("Server name to long");
+            }
+        }
     }
 
 
     public void onLoginSuccess(String pId){
+        status = "Login Success accepting new Clients";
         id = pId;
         System.out.println("Id:"+id);
         if(onId!=null) {

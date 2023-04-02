@@ -7,7 +7,7 @@ public class MainCS {
     public static void main(String[] args) {
         System.out.println("Starting signaling ClientServer!");
         Packet.packets.isEmpty();
-        new ClientServer("test",true).run();
+        new ClientServer("test",true,"127.0.0.1").run();
 
     }
 }

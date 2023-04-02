@@ -31,12 +31,16 @@ public class PongPacket extends Packet {
     @Override
     public void handle() {
         if(pv!=Packet.protocolVersion){
-            LogUtils.fatal("Signaling protocol version wrong please update or contact the author");
             ctx.disconnect();
+            if(this.handler.getInstance() instanceof Client client){
+                client.failed("Signaling protocol version wrong please update or contact the author");
+            }else{
+                LogUtils.fatal("Signaling protocol version wrong please update or contact the author");
+            }
             return;
         }
         if(this.handler.getInstance() instanceof Client client){
-            client.onConnected(ctx.channel());
+            client.preOnConnected(ctx.channel());
             LogUtils.info("Connected successful to ("+ctx.channel().remoteAddress()+") with ("+ctx.channel().localAddress()+")");
         }
     }

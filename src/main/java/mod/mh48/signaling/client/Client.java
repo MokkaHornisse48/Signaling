@@ -7,10 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import mod.mh48.signaling.ConnectorInfo;
-import mod.mh48.signaling.Instance;
-import mod.mh48.signaling.NetworkHandler;
-import mod.mh48.signaling.Utils;
+import mod.mh48.signaling.*;
 import mod.mh48.signaling.packets.*;
 
 import javax.swing.text.Utilities;
@@ -23,6 +20,17 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
     public EventLoopGroup workerGroup;
 
     public Queue<Packet> packetQueue = new ConcurrentLinkedQueue();
+
+    public String status;
+
+    public boolean failed = false;
+
+    String host = "127.0.0.1";
+
+    public Client(String pHost){
+        host = pHost;
+        status = "Initialized";
+    }
 
     public void sendAllPackets(){
         Packet p = packetQueue.poll();
@@ -37,7 +45,7 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
     }
 
     public void connect(){
-        String host = "127.0.0.1";//todo host variable
+        status = "Connecting";
         int port = 27776;
         workerGroup = new NioEventLoopGroup();
         try {
@@ -57,13 +65,28 @@ public abstract class Client extends ChannelInboundHandlerAdapter implements Ins
                 if (!future.isSuccess()) {
                     future.channel().pipeline().fireExceptionCaught(future.cause());
                 }
+                status = "Pinging";
                 Utils.sendPacket(new PingPacket(),future.channel());
             });
             channel = f.channel();
 
         }catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            failed(e.getMessage());
         }
+    }
+
+    public void failed(String s){
+        LogUtils.fatal(s);
+        failed = true;
+        status = s;
+    }
+
+    public String getStatus(){
+        return status;
+    }
+    public void preOnConnected(Channel channel){
+        status = "Connected";
+        this.onConnected(channel);
     }
 
     public abstract void onConnected(Channel channel);
