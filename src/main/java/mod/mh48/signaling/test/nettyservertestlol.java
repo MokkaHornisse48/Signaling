@@ -13,7 +13,7 @@ public class nettyservertestlol {
     public static void main(String[] args){
         try {
             ServerBootstrap b = new ServerBootstrap(); // (2)
-            ClientServer clientServer = new ClientServer("cool",true,"127.0.0.1");
+            ClientServer clientServer = new ClientServer("cool",true,"mokkahornisse48.cf");
             b.group(new NioEventLoopGroup(),new NioEventLoopGroup())
                     .channel(LocalServerChannel.class) // (3)
                     .childHandler(new ChannelInitializer<LocalChannel>() { // (4)

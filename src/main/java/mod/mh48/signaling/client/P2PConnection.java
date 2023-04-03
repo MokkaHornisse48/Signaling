@@ -38,9 +38,14 @@ public class P2PConnection {
         RTCIceServer iceServer = new RTCIceServer();
         iceServer.urls.add("stun:stun.l.google.com:19302");//todo add more lol
         iceServer.urls.add("stun:stun1.l.google.com:19302");
+        RTCIceServer turnServer = new RTCIceServer();
+        turnServer.urls.add("turn:turn.mokkahornisse48.cf:3478");
+        turnServer.username = "joinme";
+        turnServer.password = "sbrmfn";
 
         RTCConfiguration config = new RTCConfiguration();
         config.iceServers.add(iceServer);
+        config.iceServers.add(turnServer);
 
         Random rn = new Random();
 
@@ -313,7 +318,7 @@ public class P2PConnection {
     public class p2preader extends ChannelInboundHandlerAdapter{
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msgo) throws Exception { // (2)
-            //System.out.println( msgo);
+            //System.out.println(msgo);
             ByteBuf msg = ((ByteBuf) msgo);
             byte[] msgb = new byte[msg.readableBytes()];
             msg.readBytes(msgb);

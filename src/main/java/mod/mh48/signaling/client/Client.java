@@ -73,6 +73,7 @@ public abstract class Client {
                         String sdp = c2.getString("sdp");
                         String serverUrl = c2.optString("serverUrl","");
                         RTCIceCandidate candidate = new RTCIceCandidate(sdpMid, sdpMLineIndex, sdp, serverUrl);
+                        System.out.println("Recieved candidate:"+sdp);
                         if(Client.this instanceof ClientClient clientClient){
                             clientClient.onCCCandidate(candidate);
                         }
