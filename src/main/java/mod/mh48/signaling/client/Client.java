@@ -71,9 +71,9 @@ public abstract class Client {
                         String sdpMid = c2.getString("sdpMin");
                         int sdpMLineIndex = c2.getInt("sdpMLineIndex");
                         String sdp = c2.getString("sdp");
-                        String serverUrl = c2.optString("serverUrl","");
+                        String serverUrl = c2.optString("serverUrl",null);
                         RTCIceCandidate candidate = new RTCIceCandidate(sdpMid, sdpMLineIndex, sdp, serverUrl);
-                        System.out.println("Recieved candidate:"+sdp);
+                        //System.out.println("Recieved candidate:"+candidate.toString());
                         if(Client.this instanceof ClientClient clientClient){
                             clientClient.onCCCandidate(candidate);
                         }
@@ -118,6 +118,7 @@ public abstract class Client {
     }
 
     public void sendCandidate(RTCIceCandidate candidate,String cid){
+        //System.out.println(candidate);
         JSONObject m = new JSONObject();
         m.put("id","forward");
         m.put("cid",cid);

@@ -46,13 +46,17 @@ public class P2PConnection {
         RTCConfiguration config = new RTCConfiguration();
         config.iceServers.add(iceServer);
         config.iceServers.add(turnServer);
-
-        Random rn = new Random();
+        config.rtcpMuxPolicy = RTCRtcpMuxPolicy.NEGOTIATE;
 
         peerConnection = factory.createPeerConnection(config, new PeerConnectionObserver() {
             @Override
             public void onSignalingChange(RTCSignalingState state) {
                 System.out.println("Signaling:"+state);
+            }
+
+            @Override
+            public void onIceCandidateError(RTCPeerConnectionIceErrorEvent event) {
+                System.out.println("IceCandidate Error:"+event.getErrorText());
             }
 
             @Override
